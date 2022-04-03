@@ -13,13 +13,9 @@ import PlaneGame from "./page/PlaneGame.vue";
   box-sizing: border-box;
 }
 body {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  height: 100vh;
+  width: 100vw;
   background-color: burlywood;
-  z-index: 100;
 }
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
