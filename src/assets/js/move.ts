@@ -9,6 +9,8 @@ interface key {
   unsubscribe: ((event: KeyboardEvent) => void) | undefined;
 }
 
+const moveSpeed = 5; //飞机移动速度
+
 //键盘事件
 function keyboard(value: string) {
   const key: key = {
@@ -58,4 +60,59 @@ function keyboard(value: string) {
   return key;
 }
 
-export default keyboard;
+export default function planeMove(plane: { vx: number; vy: number }) {
+  //捕捉键盘上的箭头键
+  const left = keyboard("ArrowLeft"),
+    up = keyboard("ArrowUp"),
+    right = keyboard("ArrowRight"),
+    down = keyboard("ArrowDown");
+
+  //左键按下
+  left.press = () => {
+    plane.vx = -moveSpeed;
+    plane.vy = 0;
+  };
+  //左键释放
+  left.release = () => {
+    //如果左箭头已松开，右箭头未按下，且猫未垂直移动：停止猫
+    if (!right.isDown && plane.vy === 0) {
+      plane.vx = 0;
+    }
+  };
+
+  //上箭头键按下
+  up.press = () => {
+    plane.vy = -moveSpeed;
+    plane.vx = 0;
+  };
+  //上箭头键抬起
+  up.release = () => {
+    if (!down.isDown && plane.vx === 0) {
+      plane.vy = 0;
+    }
+  };
+
+  //右箭头按下
+  right.press = () => {
+    plane.vx = moveSpeed;
+    plane.vy = 0;
+  };
+  //右箭头抬起
+  right.release = () => {
+    if (!left.isDown && plane.vy === 0) {
+      plane.vx = 0;
+    }
+  };
+
+  //下箭头按下
+  down.press = () => {
+    plane.vy = moveSpeed;
+    plane.vx = 0;
+  };
+  //下箭头抬起
+  down.release = () => {
+    if (!up.isDown && plane.vx === 0) {
+      plane.vy = 0;
+    }
+  };
+}

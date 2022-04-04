@@ -6,4 +6,5 @@ declare module '*.vue' {
 }
 
 declare module '*.png'
-declare module 'pixi.js'
+declare module '*.mp3'
+declare module '*.js'
