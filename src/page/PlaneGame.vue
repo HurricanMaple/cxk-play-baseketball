@@ -1,14 +1,17 @@
 <template>
   <div class="panel" id="panel" ref="panel"></div>
-  <div class="info-box"></div>
+  <div class="info-box">
+    {{ state.score }}
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, reactive } from "vue";
 import * as PIXI from "pixi.js";
 import { Resources } from "@/assets/js/resources";
 import planeMove from "@/assets/js/move";
 import { hitTestRectangle } from "@/assets/js/bump";
+//import Dust from "@/assets/js/lib/dust.js";
 
 const Application = PIXI.Application,
   loader = PIXI.loader,
@@ -17,8 +20,23 @@ const Application = PIXI.Application,
 
 let panelWidth = document.body.clientWidth, //游戏面板宽度
   panelHeight = document.body.clientHeight, //游戏面板高度
-  bulletSpeed = 5, //子弹速度
-  score = 0;
+  bulletSpeed = 5; //子弹速度
+
+const state = reactive({
+  score: 0,
+});
+
+//把屏幕宽度分为10份  每份宽度
+let trackWidth = Math.floor(panelWidth / 10);
+let trackArr = new Array(10);
+
+//初始化轨道数组
+for (let i = 0; i < 10; i++) {
+  trackArr[i] = trackWidth * (i + 1) + 25;
+}
+
+//播放音频
+let audio = new Audio();
 
 let app = new Application({
   width: panelWidth, // default: 800 宽度
@@ -39,9 +57,7 @@ let plane: any,
   chickenArr: any[] = [],
   hairArr: any[] = [];
 
-function setup(loader: object, res: object) {
-  console.log(loader, res);
-
+function setup() {
   // 创建背景
   let bg = new Sprite(resources.bg.texture);
   bg.width = panelWidth;
@@ -51,7 +67,7 @@ function setup(loader: object, res: object) {
   app.stage.addChild(bg);
 
   // 创建分数
-  let scorePanel = new PIXI.Text("得分：" + score, {
+  let scorePanel = new PIXI.Text("得分：" + state.score, {
     fontSize: 15,
     fill: "#fff",
   });
@@ -68,6 +84,8 @@ function setup(loader: object, res: object) {
   plane.vx = 0;
   plane.vy = 0;
 
+  plane.interactive = true;
+
   app.stage.addChild(plane);
 
   //键盘控制飞机移动
@@ -77,6 +95,7 @@ function setup(loader: object, res: object) {
 }
 
 let delay = 0;
+
 function gameLoop() {
   plane.x += plane.vx;
   plane.y += plane.vy;
@@ -109,16 +128,18 @@ function gameLoop() {
     bulletArr.push(bullet);
 
     let chicken = new Sprite(resources.chicken.texture);
+    let chickenTrack = Math.floor(Math.random() * 10);
     app.stage.addChild(chicken);
-    chicken.x = 100;
+    chicken.x = trackArr[chickenTrack];
     chicken.y = 0;
     chicken.width = 50;
     chicken.height = 50;
     chickenArr.push(chicken);
 
     let hair = new Sprite(resources.hair.texture);
+    let hairTrack = Math.floor(Math.random() * 10);
     app.stage.addChild(hair);
-    hair.x = 200;
+    hair.x = trackArr[hairTrack];
     hair.y = 0;
     hair.width = 50;
     hair.height = 35;
@@ -133,26 +154,62 @@ function gameLoop() {
     bulletArr[i].rotation = (delay % 10) / 10;
     //没有发生碰撞也没有超出屏幕
     bulletArr[i].y -= bulletSpeed;
-    for (let j = 0; j < hairArr.length; j++) {
-      //判断是否碰撞
-      if (hitTestRectangle(bulletArr[i], hairArr[j])) {
-        //如果发生碰撞
-        let _bullet = bulletArr.splice(i, 1)[0];
-        let _hair = hairArr.splice(j, 1)[0];
 
-        _hair.visible = false;
-        _bullet.visible = false;
-        i--;
-        j--;
-        break;
-      } else {
-        //超出屏幕就删除
-        if (bulletArr[i].y < 0) {
+    //存放需要遍历的敌人
+    let enemyArr = [
+      {
+        type: "hair", //敌人类型
+        isHit: false, //是否碰撞
+        voice: "boom", //爆炸音效
+      },
+      {
+        type: "chicken",
+        isHit: false,
+        voice: "crow",
+      },
+    ];
+
+    for (let m = 0; m < enemyArr.length; m++) {
+      let enemy = enemyArr[m];
+
+      //当前的敌人数组
+      let curEnemyArr = eval(enemy.type + "Arr");
+      for (let j = 0; j < curEnemyArr.length; j++) {
+        //判断是否碰撞
+        if (hitTestRectangle(bulletArr[i], curEnemyArr[j])) {
+          //如果发生碰撞
           let _bullet = bulletArr.splice(i, 1)[0];
+          let _enemy = curEnemyArr.splice(j, 1)[0];
+
+          audio.src = resources[enemy.voice].url;
+          audio.play();
+
           _bullet.visible = false;
-          i--;
+          _enemy.visible = false;
+
+          enemy.isHit = true;
+          console.log(enemy);
+          console.log("---------------");
+
           break;
         }
+      }
+
+      if (enemy.isHit) {
+        //只要子弹和一个敌人发生了碰撞，就终止循环
+        break;
+      }
+    }
+
+    if (enemyArr.some((item) => item.isHit)) {
+      i--;
+      state.score++;
+    } else {
+      //没有发生碰撞就判断是否超出屏幕，超出就删除
+      if (bulletArr[i].y < 0) {
+        let _bullet = bulletArr.splice(i, 1)[0];
+        _bullet.visible = false;
+        i--;
       }
     }
   }

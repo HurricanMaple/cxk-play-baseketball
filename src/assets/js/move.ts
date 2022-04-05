@@ -60,7 +60,20 @@ function keyboard(value: string) {
   return key;
 }
 
-export default function planeMove(plane: { vx: number; vy: number }) {
+//鼠标控制飞机(cxk)的移动
+function onDragMove(event: any) {
+  const cur = event.currentTarget;
+  const { x, y } = event.data.global;
+  cur.x = x - 50;
+  cur.y = y - 75;
+}
+
+export default function planeMove(plane: {
+  on: (arg0: string, arg1: (event: any) => void) => void;
+  vx: number;
+  vy: number;
+}) {
+  plane.on("pointermove", onDragMove);
   //捕捉键盘上的箭头键
   const left = keyboard("ArrowLeft"),
     up = keyboard("ArrowUp"),
