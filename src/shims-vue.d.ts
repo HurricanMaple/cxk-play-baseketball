@@ -8,4 +8,5 @@ declare module '*.vue' {
 declare module '*.png'
 declare module '*.wav'
 declare module '*.mp3'
+declare module '*.aac'
 declare module '*.js'

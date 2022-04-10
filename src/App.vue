@@ -26,6 +26,9 @@ onMounted(() => {
   padding: 0;
   box-sizing: border-box;
 }
+ul {
+  list-style-type: none;
+}
 body {
   height: 100vh;
   width: 100vw;

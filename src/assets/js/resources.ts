@@ -11,6 +11,7 @@ import hair from "@/assets/img/hair.png";
 
 import boom from "@/assets/music/boom.wav";
 import crow from "@/assets/music/crow.mp3";
+import ngm from "@/assets/music/ngm.aac";
 
 interface Resource {
   [key: string]: string;
@@ -28,4 +29,5 @@ export const Resources: Resource = {
   hair,
   boom,
   crow,
+  ngm,
 };

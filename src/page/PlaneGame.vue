@@ -1,7 +1,11 @@
 <template>
   <div class="panel" id="panel" ref="panel"></div>
+  <div class="rule-box">123</div>
   <div class="info-box">
-    {{ state.score }}
+    <ul>
+      <li>得分:{{ state.score }}</li>
+      <li>HP:{{ state.hp }}</li>
+    </ul>
   </div>
 </template>
 
@@ -20,10 +24,33 @@ const Application = PIXI.Application,
 
 let panelWidth = document.body.clientWidth, //游戏面板宽度
   panelHeight = document.body.clientHeight, //游戏面板高度
-  bulletSpeed = 5; //子弹速度
+  bulletSpeed = 10, //子弹速度
+  createBulletSpeed = 0.2, //创建子弹的速度 n秒
+  createHairSpeed = 0.7, //创建头发的速度
+  createChickenSpeed = 1, //创建鸡的速度
+  createLitchiSpeed = 1; //创建鸡的速度
 
+//存放需要遍历的敌人
+let enemyArr = [
+  {
+    type: "hair", //敌人类型
+    isHit: false, //是否碰撞
+    voice: "boom", //爆炸音效
+  },
+  {
+    type: "chicken",
+    isHit: false,
+    voice: "crow",
+  },
+  {
+    type: "litchi",
+    isHit: false,
+    voice: "ngm",
+  },
+];
 const state = reactive({
-  score: 0,
+  score: 0, //得分
+  hp: 100, //血量
 });
 
 //把屏幕宽度分为10份  每份宽度
@@ -55,7 +82,8 @@ loader.load(setup);
 let plane: any,
   bulletArr: any[] = [],
   chickenArr: any[] = [],
-  hairArr: any[] = [];
+  hairArr: any[] = [],
+  litchiArr: any[] = [];
 
 function setup() {
   // 创建背景
@@ -97,6 +125,7 @@ function setup() {
 let delay = 0;
 
 function gameLoop() {
+  delay += 1;
   plane.x += plane.vx;
   plane.y += plane.vy;
 
@@ -114,10 +143,9 @@ function gameLoop() {
     plane.y = panelHeight - 150;
   }
 
-  let createSpeed = 30; //创建子弹的速度 n秒*60
-  if (delay > createSpeed) {
+  //创建子弹
+  if (delay % Math.round(createBulletSpeed * 60) === 0) {
     //创建子弹
-    delay = 0;
     let bullet = new Sprite(resources.basketball.texture);
     app.stage.addChild(bullet);
     bullet.x = plane.x + 50;
@@ -126,16 +154,10 @@ function gameLoop() {
     bullet.height = 20;
     bullet.anchor.set(0.5);
     bulletArr.push(bullet);
+  }
 
-    let chicken = new Sprite(resources.chicken.texture);
-    let chickenTrack = Math.floor(Math.random() * 10);
-    app.stage.addChild(chicken);
-    chicken.x = trackArr[chickenTrack];
-    chicken.y = 0;
-    chicken.width = 50;
-    chicken.height = 50;
-    chickenArr.push(chicken);
-
+  //创建中分头发
+  if (delay % Math.round(createHairSpeed * 60) === 0) {
     let hair = new Sprite(resources.hair.texture);
     let hairTrack = Math.floor(Math.random() * 10);
     app.stage.addChild(hair);
@@ -144,8 +166,30 @@ function gameLoop() {
     hair.width = 50;
     hair.height = 35;
     hairArr.push(hair);
-  } else {
-    delay += 1;
+  }
+
+  //创建鸡
+  if (delay % Math.round(createChickenSpeed * 60) === 0) {
+    let chicken = new Sprite(resources.chicken.texture);
+    let chickenTrack = Math.floor(Math.random() * 10);
+    app.stage.addChild(chicken);
+    chicken.x = trackArr[chickenTrack];
+    chicken.y = 0;
+    chicken.width = 50;
+    chicken.height = 50;
+    chickenArr.push(chicken);
+  }
+
+  //创建荔枝
+  if (delay % Math.round(createLitchiSpeed * 60) === 0) {
+    let litchi = new Sprite(resources.litchi.texture);
+    let litchiTrack = Math.floor(Math.random() * 10);
+    app.stage.addChild(litchi);
+    litchi.x = trackArr[litchiTrack];
+    litchi.y = 0;
+    litchi.width = 50;
+    litchi.height = 50;
+    litchiArr.push(litchi);
   }
 
   //子弹
@@ -155,22 +199,10 @@ function gameLoop() {
     //没有发生碰撞也没有超出屏幕
     bulletArr[i].y -= bulletSpeed;
 
-    //存放需要遍历的敌人
-    let enemyArr = [
-      {
-        type: "hair", //敌人类型
-        isHit: false, //是否碰撞
-        voice: "boom", //爆炸音效
-      },
-      {
-        type: "chicken",
-        isHit: false,
-        voice: "crow",
-      },
-    ];
+    let _enemyArr: any[] = JSON.parse(JSON.stringify(enemyArr));
 
-    for (let m = 0; m < enemyArr.length; m++) {
-      let enemy = enemyArr[m];
+    for (let m = 0; m < _enemyArr.length; m++) {
+      let enemy = _enemyArr[m];
 
       //当前的敌人数组
       let curEnemyArr = eval(enemy.type + "Arr");
@@ -188,9 +220,6 @@ function gameLoop() {
           _enemy.visible = false;
 
           enemy.isHit = true;
-          console.log(enemy);
-          console.log("---------------");
-
           break;
         }
       }
@@ -201,7 +230,8 @@ function gameLoop() {
       }
     }
 
-    if (enemyArr.some((item) => item.isHit)) {
+    //只要一个障碍物发生了碰撞
+    if (_enemyArr.some((item) => item.isHit)) {
       i--;
       state.score++;
     } else {
@@ -214,26 +244,19 @@ function gameLoop() {
     }
   }
 
-  //鸡
-  for (let i = 0; i < chickenArr.length; i++) {
-    let chicken = chickenArr[i];
-    chicken.y += 2;
-    if (chicken.y > panelHeight) {
-      let _chicken = chickenArr.splice(i, 1)[0];
-      _chicken.visible = false;
+  //判断是否超出边界
+  enemyArr.forEach((item) => {
+    //当前的敌人数组
+    let curEnemyArr = eval(item.type + "Arr");
+    for (let i = 0; i < curEnemyArr.length; i++) {
+      let enemy = curEnemyArr[i];
+      enemy.y += 2;
+      if (enemy.y > panelHeight) {
+        let _enemy = curEnemyArr.splice(i, 1)[0];
+        _enemy.visible = false;
+      }
     }
-  }
-
-  //头发
-  for (let i = 0; i < hairArr.length; i++) {
-    let hair = hairArr[i];
-    hair.y += 2;
-    //超出屏幕时删除
-    if (hair.y > panelHeight) {
-      let _hair = hairArr.splice(i, 1)[0];
-      _hair.visible = false;
-    }
-  }
+  });
 }
 
 //游戏面板的dom
@@ -250,13 +273,27 @@ onMounted(() => {
 #panel {
   height: 100%;
 }
+
+.rule-box {
+  position: fixed;
+  bottom: 100px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 5px;
+}
 .info-box {
   background-color: rgba(255, 255, 255, 0.5);
-  width: 100px;
-  height: 100px;
+  padding: 10px;
   border-radius: 5px;
   position: absolute;
   right: 10px;
   top: 10px;
+  ul {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    li:not(:last-child) {
+      margin-bottom: 8px;
+    }
+  }
 }
 </style>

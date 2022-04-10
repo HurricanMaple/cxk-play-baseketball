@@ -26,20 +26,20 @@ export function hitTestRectangle(r1: any, r2: any) {
   const combinedHalfWidths = r1.halfWidth + r2.halfWidth;
   const combinedHalfHeights = r1.halfHeight + r2.halfHeight;
 
-  //Check for a collision on the x axis
+  //检查x轴上是否有碰撞
   if (Math.abs(vx) < combinedHalfWidths) {
-    //A collision might be occurring. Check for a collision on the y axis
+    //检查y轴上是否有碰撞
     if (Math.abs(vy) < combinedHalfHeights) {
-      //There's definitely a collision happening
+      //碰撞
       hit = true;
     } else {
-      //There's no collision on the y axis
+      //没有碰撞
       hit = false;
     }
   } else {
-    //There's no collision on the x axis
+    //x轴无碰撞
     hit = false;
   }
-  //`hit` will be either `true` or `false`
+
   return hit;
 }
