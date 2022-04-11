@@ -1,23 +1,11 @@
 <template>
-  <!-- <audio :src="music" autoplay id="audio"></audio> -->
   <PlaneGame />
+  <Info />
 </template>
 
 <script lang="ts" setup>
 import PlaneGame from "./page/PlaneGame.vue";
-import music from "@/assets/music/jntm.mp3";
-import { onMounted } from "vue";
-
-onMounted(() => {
-  let audioDom: HTMLAudioElement | null = document.getElementById(
-    "audio"
-  ) as HTMLAudioElement;
-  window.onclick = function () {
-    if (audioDom) {
-      audioDom.play();
-    }
-  };
-});
+import Info from "./components/Info.vue";
 </script>
 
 <style lang="scss">

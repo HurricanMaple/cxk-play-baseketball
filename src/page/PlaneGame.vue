@@ -1,6 +1,5 @@
 <template>
   <div class="panel" id="panel" ref="panel"></div>
-  <div class="rule-box">123</div>
   <div class="info-box">
     <ul>
       <li>得分:{{ state.score }}</li>
@@ -24,11 +23,13 @@ const Application = PIXI.Application,
 
 let panelWidth = document.body.clientWidth, //游戏面板宽度
   panelHeight = document.body.clientHeight, //游戏面板高度
+  roleWidth = 100, //角色宽度
+  roleHeight = 150, //角色高度
   bulletSpeed = 10, //子弹速度
   createBulletSpeed = 0.2, //创建子弹的速度 n秒
   createHairSpeed = 0.7, //创建头发的速度
   createChickenSpeed = 1, //创建鸡的速度
-  createLitchiSpeed = 1; //创建鸡的速度
+  createLitchiSpeed = 5; //创建荔枝的速度
 
 //存放需要遍历的敌人
 let enemyArr = [
@@ -42,10 +43,14 @@ let enemyArr = [
     isHit: false,
     voice: "crow",
   },
+];
+
+//存放奖励
+let rewardArr = [
   {
     type: "litchi",
     isHit: false,
-    voice: "ngm",
+    voice: "reward",
   },
 ];
 const state = reactive({
@@ -61,9 +66,6 @@ let trackArr = new Array(10);
 for (let i = 0; i < 10; i++) {
   trackArr[i] = trackWidth * (i + 1) + 25;
 }
-
-//播放音频
-let audio = new Audio();
 
 let app = new Application({
   width: panelWidth, // default: 800 宽度
@@ -105,10 +107,10 @@ function setup() {
   app.stage.addChild(scorePanel);
 
   plane = new Sprite(resources.cxk.texture);
-  plane.x = panelWidth / 2 - 50;
-  plane.y = panelHeight - 170;
-  plane.width = 100;
-  plane.height = 150;
+  plane.x = panelWidth / 2 - roleWidth / 2;
+  plane.y = panelHeight - 20 - roleHeight;
+  plane.width = roleWidth;
+  plane.height = roleHeight;
   plane.vx = 0;
   plane.vy = 0;
 
@@ -136,11 +138,11 @@ function gameLoop() {
   if (plane.y < 0) {
     plane.y = 0;
   }
-  if (plane.x > panelWidth - 100) {
-    plane.x = panelWidth - 100;
+  if (plane.x > panelWidth - roleWidth) {
+    plane.x = panelWidth - roleWidth;
   }
-  if (plane.y > panelHeight - 150) {
-    plane.y = panelHeight - 150;
+  if (plane.y > panelHeight - roleHeight) {
+    plane.y = panelHeight - roleHeight;
   }
 
   //创建子弹
@@ -150,10 +152,14 @@ function gameLoop() {
     app.stage.addChild(bullet);
     bullet.x = plane.x + 50;
     bullet.y = plane.y - 20;
-    bullet.width = 20;
-    bullet.height = 20;
+    bullet.width = 12;
+    bullet.height = 12;
     bullet.anchor.set(0.5);
     bulletArr.push(bullet);
+
+    let audio = new Audio();
+    audio.src = resources.biu.url;
+    audio.play();
   }
 
   //创建中分头发
@@ -187,6 +193,8 @@ function gameLoop() {
     app.stage.addChild(litchi);
     litchi.x = trackArr[litchiTrack];
     litchi.y = 0;
+    litchi.vx = Math.random() * 2 - 1; //x轴分速度
+    litchi.vy = Math.random() + 1; //y轴分速度
     litchi.width = 50;
     litchi.height = 50;
     litchiArr.push(litchi);
@@ -213,6 +221,8 @@ function gameLoop() {
           let _bullet = bulletArr.splice(i, 1)[0];
           let _enemy = curEnemyArr.splice(j, 1)[0];
 
+          //播放音频
+          let audio = new Audio();
           audio.src = resources[enemy.voice].url;
           audio.play();
 
@@ -244,7 +254,30 @@ function gameLoop() {
     }
   }
 
-  //判断是否超出边界
+  //判断飞机和奖励项的碰撞
+  let _rewardArr: any[] = JSON.parse(JSON.stringify(rewardArr));
+  for (let n = 0; n < _rewardArr.length; n++) {
+    let reward = _rewardArr[n];
+    //当前的奖励数组
+    let curRewardArr = eval(reward.type + "Arr");
+    for (let i = 0; i < curRewardArr.length; i++) {
+      if (hitTestRectangle(plane, curRewardArr[i])) {
+        //得到奖励
+        let _reward = curRewardArr.splice(i, 1)[0];
+
+        //播放获得奖励的音频
+        let audio = new Audio();
+        audio.src = resources[reward.voice].url;
+        audio.play();
+
+        state.hp += 20;
+
+        _reward.visible = false;
+      }
+    }
+  }
+
+  //判断敌人是否超出边界
   enemyArr.forEach((item) => {
     //当前的敌人数组
     let curEnemyArr = eval(item.type + "Arr");
@@ -254,6 +287,21 @@ function gameLoop() {
       if (enemy.y > panelHeight) {
         let _enemy = curEnemyArr.splice(i, 1)[0];
         _enemy.visible = false;
+      }
+    }
+  });
+
+  //判断奖励项是否超出边界
+  rewardArr.forEach((item) => {
+    //当前的奖励数组
+    let curRewardArr = eval(item.type + "Arr");
+    for (let i = 0; i < curRewardArr.length; i++) {
+      let reward = curRewardArr[i];
+      reward.x += reward.vx;
+      reward.y += reward.vy;
+      if (reward.y > panelHeight) {
+        let _reward = curRewardArr.splice(i, 1)[0];
+        _reward.visible = false;
       }
     }
   });
@@ -274,12 +322,6 @@ onMounted(() => {
   height: 100%;
 }
 
-.rule-box {
-  position: fixed;
-  bottom: 100px;
-  background-color: rgba(255, 255, 255, 0.5);
-  border-radius: 5px;
-}
 .info-box {
   background-color: rgba(255, 255, 255, 0.5);
   padding: 10px;

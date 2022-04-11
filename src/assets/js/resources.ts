@@ -9,9 +9,11 @@ import lsh from "@/assets/img/lsh.png";
 import bg from "@/assets/img/bg.png";
 import hair from "@/assets/img/hair.png";
 
-import boom from "@/assets/music/boom.wav";
+import boom from "@/assets/music/boom.mp3";
 import crow from "@/assets/music/crow.mp3";
 import ngm from "@/assets/music/ngm.aac";
+import biu from "@/assets/music/biu.mp3";
+import reward from "@/assets/music/reward.mp3";
 
 interface Resource {
   [key: string]: string;
@@ -30,4 +32,6 @@ export const Resources: Resource = {
   boom,
   crow,
   ngm,
+  biu,
+  reward,
 };
