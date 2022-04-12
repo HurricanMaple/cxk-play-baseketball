@@ -3,20 +3,35 @@
   <div class="info-box">
     <ul>
       <li>得分:{{ state.score }}</li>
-      <li>HP:{{ state.hp }}</li>
+      <li>
+        HP:{{ state.hp }}
+        <div class="hp-box">
+          <div
+            class="cur-hp"
+            :class="hpClass"
+            :style="{ width: state.hp + 'px' }"
+          ></div>
+        </div>
+      </li>
     </ul>
   </div>
+  <!-- <div class="start-box" v-if="!state.status">
+    <div class="box-content">
+      <div class="content">{{ state.content }}</div>
+      <div class="start-btn" @click="startGame">开始游戏</div>
+    </div>
+  </div> -->
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, reactive } from "vue";
+import { onMounted, ref, reactive, watch, computed } from "vue";
 import * as PIXI from "pixi.js";
 import { Resources } from "@/assets/js/resources";
 import planeMove from "@/assets/js/move";
 import { hitTestRectangle } from "@/assets/js/bump";
 //import Dust from "@/assets/js/lib/dust.js";
 
-const Application = PIXI.Application,
+let Application = PIXI.Application,
   loader = PIXI.loader,
   Sprite = PIXI.Sprite,
   resources = PIXI.loader.resources;
@@ -54,8 +69,18 @@ let rewardArr = [
   },
 ];
 const state = reactive({
+  status: false, //游戏是否开始
   score: 0, //得分
   hp: 100, //血量
+});
+
+//血量的动态类名
+const hpClass = computed(() => {
+  return {
+    more: state.hp >= 70,
+    middle: state.hp > 30 && state.hp < 70,
+    less: state.hp <= 30,
+  };
 });
 
 //把屏幕宽度分为10份  每份宽度
@@ -79,6 +104,7 @@ let app = new Application({
 for (let key in Resources) {
   loader.add(key, Resources[key]);
 }
+
 loader.load(setup);
 
 let plane: any,
@@ -95,16 +121,6 @@ function setup() {
   bg.x = 0;
   bg.y = 0;
   app.stage.addChild(bg);
-
-  // 创建分数
-  let scorePanel = new PIXI.Text("得分：" + state.score, {
-    fontSize: 15,
-    fill: "#fff",
-  });
-  scorePanel.x = 10;
-  scorePanel.y = 10;
-  scorePanel.name = "scorePanel";
-  app.stage.addChild(scorePanel);
 
   plane = new Sprite(resources.cxk.texture);
   plane.x = panelWidth / 2 - roleWidth / 2;
@@ -183,6 +199,7 @@ function gameLoop() {
     chicken.y = 0;
     chicken.width = 50;
     chicken.height = 50;
+
     chickenArr.push(chicken);
   }
 
@@ -255,9 +272,9 @@ function gameLoop() {
   }
 
   //判断飞机和奖励项的碰撞
-  let _rewardArr: any[] = JSON.parse(JSON.stringify(rewardArr));
-  for (let n = 0; n < _rewardArr.length; n++) {
-    let reward = _rewardArr[n];
+  let rewardArray: any[] = JSON.parse(JSON.stringify(rewardArr));
+  for (let n = 0; n < rewardArray.length; n++) {
+    let reward = rewardArray[n];
     //当前的奖励数组
     let curRewardArr = eval(reward.type + "Arr");
     for (let i = 0; i < curRewardArr.length; i++) {
@@ -274,6 +291,38 @@ function gameLoop() {
 
         _reward.visible = false;
       }
+    }
+  }
+
+  //判断飞机和障碍物的碰撞
+  let enemyArray: any[] = JSON.parse(JSON.stringify(enemyArr));
+
+  for (let m = 0; m < enemyArray.length; m++) {
+    let enemy = enemyArray[m];
+
+    //当前的敌人数组
+    let curEnemyArr = eval(enemy.type + "Arr");
+    for (let j = 0; j < curEnemyArr.length; j++) {
+      //判断是否碰撞
+      if (hitTestRectangle(plane, curEnemyArr[j])) {
+        //如果发生碰撞
+        let _enemy = curEnemyArr.splice(j, 1)[0];
+
+        //播放音频
+        let audio = new Audio();
+        audio.src = resources.ngm.url;
+        audio.play();
+
+        //扣血
+        state.hp -= 10;
+
+        _enemy.visible = false;
+      }
+    }
+
+    if (enemy.isHit) {
+      //只要子弹和一个敌人发生了碰撞，就终止循环
+      break;
     }
   }
 
@@ -307,6 +356,18 @@ function gameLoop() {
   });
 }
 
+//监听血量，若小于等于0则游戏结束
+watch(
+  () => state.hp,
+  (newHp) => {
+    if (newHp <= 0) {
+      state.status = false;
+      //重新开始
+      console.log(loader);
+    }
+  }
+);
+
 //游戏面板的dom
 const panel = ref<HTMLElement | null>(null);
 onMounted(() => {
@@ -335,6 +396,55 @@ onMounted(() => {
     align-items: flex-start;
     li:not(:last-child) {
       margin-bottom: 8px;
+    }
+  }
+  .hp-box {
+    width: 100px;
+    height: 12px;
+    position: relative;
+    border: 1px solid #eee;
+    .cur-hp {
+      position: absolute;
+
+      height: 10px;
+      left: 0;
+      top: 0;
+      &.more {
+        background-color: rgb(4, 255, 0);
+      }
+      &.middle {
+        background-color: rgb(221, 255, 0);
+      }
+      &.less {
+        background-color: #f00;
+      }
+    }
+  }
+}
+.start-box {
+  position: fixed;
+  background-image: url("@/assets/img/bg.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  z-index: 10;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  .box-content {
+    border-radius: 10px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    padding: 20px 40px;
+    .start-btn {
+      background-color: rgb(223, 219, 120);
+      color: #fff;
+      border-radius: 5px;
+      padding: 5px 8px;
+      cursor: pointer;
     }
   }
 }

@@ -1,6 +1,6 @@
 <template>
   <div class="set-box">
-    <audio :src="music" autoplay id="audio"></audio>
+    <audio :src="music" autoplay id="audio" loop></audio>
     <input type="checkbox" v-model="state.playMusic" id="music" />
     <label class="music-img-wrap" for="music">
       <img
@@ -43,6 +43,7 @@ watch(
     ) as HTMLAudioElement;
     if (n) {
       if (audioDom) {
+        audioDom.volume = 0.3;
         audioDom.play();
       }
     } else {
