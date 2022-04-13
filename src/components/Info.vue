@@ -9,8 +9,26 @@
       />
     </label>
   </div>
-  <div class="info-box">
-    <ul>
+  <div
+    class="info-box"
+    :style="{ left: state.isOpen ? '10px' : -state.elWidth + 'px' }"
+    ref="boxRef"
+    @click="state.isOpen = false"
+  >
+    <div class="desc">
+      <h3>游戏说明</h3>
+      <p>操作方向键(⬅⬆➡⬇)或移动鼠标(🖱)控制坤坤移动</p>
+      <p>作者：<s>小黑子</s> ikun</p>
+      <p>
+        github地址:<a
+          href="https://github.com/1051029357/plane-game"
+          target="_blank"
+          >1051029537的github</a
+        >
+      </p>
+      <p>点击该面板收起</p>
+    </div>
+    <ul class="goods-list">
       <li class="item">
         <img src="@/assets/img/litchi.png" />
         <div class="text">荔枝：HP+20</div>
@@ -23,16 +41,37 @@
         <img src="@/assets/img/chicken.png" />
         <div class="text">已练习两年半</div>
       </li>
+      <li class="item">
+        <img src="@/assets/img/lsh.png" />
+        <div class="text">绿尸寒:暂定</div>
+      </li>
+      <li class="item">
+        <img src="@/assets/img/branch.png" />
+        <div class="text">树枝:暂定</div>
+      </li>
+      <li class="item">
+        <img src="@/assets/img/kun.png" />
+        <div class="text">鲲:暂定</div>
+      </li>
     </ul>
+    <div
+      class="operate"
+      v-show="!state.isOpen"
+      @click.stop="state.isOpen = true"
+    >
+      >
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import music from "@/assets/music/jntm.mp3";
-import { reactive, watch } from "vue";
+import { reactive, watch, ref, onMounted } from "vue";
 
 const state = reactive({
   playMusic: false,
+  isOpen: true,
+  elWidth: 0,
 });
 
 watch(
@@ -53,6 +92,14 @@ watch(
     }
   }
 );
+
+const boxRef = ref<HTMLElement | null>(null);
+
+onMounted(() => {
+  if (boxRef.value) {
+    state.elWidth = boxRef.value.offsetWidth;
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -66,25 +113,54 @@ watch(
 }
 .info-box {
   position: fixed;
-  left: 10px;
   bottom: 10px;
   border-radius: 5px;
   background-color: rgba(255, 255, 255, 0.5);
   padding: 10px;
-  ul .item {
+  transition: all 0.4s;
+  cursor: pointer;
+  max-width: 200px;
+
+  .goods-list {
+    margin-top: 20px;
+    .item {
+      display: flex;
+      align-items: center;
+      img {
+        width: 30px;
+        max-width: 30px;
+        max-height: 30px;
+        margin-right: 5px;
+        object-fit: contain;
+      }
+      .text {
+      }
+      &:not(:last-child) {
+        margin-bottom: 5px;
+      }
+    }
+  }
+  .operate {
+    position: absolute;
+    top: 50%;
+    right: -15px;
+    width: 15px;
+    height: 35px;
+    background-color: rgb(165, 162, 162);
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    transform: translateY(-50%);
     display: flex;
-    img {
-      width: 20px;
-      max-width: 20px;
-      max-height: 20px;
-      margin-right: 5px;
-      object-fit: contain;
-    }
-    .text {
-    }
-    &:not(:last-child) {
-      margin-bottom: 5px;
-    }
+    align-items: center;
+    justify-content: center;
+  }
+}
+.desc {
+  h3 {
+    margin-bottom: 8px;
+  }
+  p {
+    margin-bottom: 5px;
   }
 }
 .set-box {

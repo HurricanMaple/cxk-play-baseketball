@@ -15,12 +15,13 @@
       </li>
     </ul>
   </div>
-  <!-- <div class="start-box" v-if="!state.status">
+  <div class="start-box" v-if="!state.status">
     <div class="box-content">
       <div class="content">{{ state.content }}</div>
+      <div class="score">得分：{{ state.score }}</div>
       <div class="start-btn" @click="startGame">开始游戏</div>
     </div>
-  </div> -->
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -70,6 +71,7 @@ let rewardArr = [
 ];
 const state = reactive({
   status: false, //游戏是否开始
+  content: "", //内容
   score: 0, //得分
   hp: 100, //血量
 });
@@ -138,6 +140,8 @@ function setup() {
   planeMove(plane);
 
   app.ticker.add(() => gameLoop());
+  //先暂停
+  app.ticker.stop();
 }
 
 let delay = 0;
@@ -356,6 +360,12 @@ function gameLoop() {
   });
 }
 
+//开始游戏
+const startGame = () => {
+  state.status = true;
+  state.score = 0;
+  app.ticker.start();
+};
 //监听血量，若小于等于0则游戏结束
 watch(
   () => state.hp,
@@ -363,7 +373,14 @@ watch(
     if (newHp <= 0) {
       state.status = false;
       //重新开始
-      console.log(loader);
+      app.ticker.stop();
+      bulletArr = [];
+      chickenArr = [];
+      hairArr = [];
+      litchiArr = [];
+
+      state.hp = 100;
+      state.content = "您失败了！";
     }
   }
 );
@@ -405,7 +422,7 @@ onMounted(() => {
     border: 1px solid #eee;
     .cur-hp {
       position: absolute;
-
+      transition: all 0.3s;
       height: 10px;
       left: 0;
       top: 0;
