@@ -39,13 +39,32 @@ let Application = PIXI.Application,
 
 let panelWidth = document.body.clientWidth, //游戏面板宽度
   panelHeight = document.body.clientHeight, //游戏面板高度
+  trackNum = 20, //轨道条数
   roleWidth = 100, //角色宽度
   roleHeight = 150, //角色高度
-  bulletSpeed = 10, //子弹速度
-  createBulletSpeed = 0.2, //创建子弹的速度 n秒
-  createHairSpeed = 0.7, //创建头发的速度
-  createChickenSpeed = 1, //创建鸡的速度
-  createLitchiSpeed = 5; //创建荔枝的速度
+  bulletParams = {
+    createSpeed: 0.2, //创建子弹的速度 n秒
+    speed: 10, //子弹速度
+    width: 12,
+    height: 12,
+  },
+  hairParams = {
+    createSpeed: 0.7, //创建头发的速度
+    hp: 2,
+    width: 50,
+    height: 35,
+  },
+  chickenParams = {
+    createSpeed: 1, //创建鸡的速度
+    hp: 5,
+    width: 50,
+    height: 50,
+  },
+  litchiParams = {
+    createSpeed: 5, //创建荔枝的速度
+    width: 50,
+    height: 50,
+  };
 
 //存放需要遍历的敌人
 let enemyArr = [
@@ -86,11 +105,11 @@ const hpClass = computed(() => {
 });
 
 //把屏幕宽度分为10份  每份宽度
-let trackWidth = Math.floor(panelWidth / 10);
-let trackArr = new Array(10);
+let trackWidth = Math.floor(panelWidth / trackNum);
+let trackArr = new Array(trackNum);
 
 //初始化轨道数组
-for (let i = 0; i < 10; i++) {
+for (let i = 0; i < trackNum; i++) {
   trackArr[i] = trackWidth * (i + 1) + 25;
 }
 
@@ -166,14 +185,14 @@ function gameLoop() {
   }
 
   //创建子弹
-  if (delay % Math.round(createBulletSpeed * 60) === 0) {
+  if (delay % Math.round(bulletParams.createSpeed * 60) === 0) {
     //创建子弹
     let bullet = new Sprite(resources.basketball.texture);
     app.stage.addChild(bullet);
-    bullet.x = plane.x + 50;
+    bullet.x = plane.x + roleWidth / 2;
     bullet.y = plane.y - 20;
-    bullet.width = 12;
-    bullet.height = 12;
+    bullet.width = bulletParams.width;
+    bullet.height = bulletParams.height;
     bullet.anchor.set(0.5);
     bulletArr.push(bullet);
 
@@ -183,41 +202,43 @@ function gameLoop() {
   }
 
   //创建中分头发
-  if (delay % Math.round(createHairSpeed * 60) === 0) {
+  if (delay % Math.round(hairParams.createSpeed * 60) === 0) {
     let hair = new Sprite(resources.hair.texture);
-    let hairTrack = Math.floor(Math.random() * 10);
+    let hairTrack = Math.floor(Math.random() * trackNum);
     app.stage.addChild(hair);
     hair.x = trackArr[hairTrack];
     hair.y = 0;
-    hair.width = 50;
-    hair.height = 35;
+    hair.width = hairParams.width;
+    hair.height = hairParams.height;
+    hair.hp = hairParams.hp; //血量
     hairArr.push(hair);
   }
 
   //创建鸡
-  if (delay % Math.round(createChickenSpeed * 60) === 0) {
+  if (delay % Math.round(chickenParams.createSpeed * 60) === 0) {
     let chicken = new Sprite(resources.chicken.texture);
-    let chickenTrack = Math.floor(Math.random() * 10);
+    let chickenTrack = Math.floor(Math.random() * trackNum);
     app.stage.addChild(chicken);
     chicken.x = trackArr[chickenTrack];
     chicken.y = 0;
-    chicken.width = 50;
-    chicken.height = 50;
+    chicken.hp = chickenParams.hp; //血量
+    chicken.width = chickenParams.width;
+    chicken.height = chickenParams.height;
 
     chickenArr.push(chicken);
   }
 
   //创建荔枝
-  if (delay % Math.round(createLitchiSpeed * 60) === 0) {
+  if (delay % Math.round(litchiParams.createSpeed * 60) === 0) {
     let litchi = new Sprite(resources.litchi.texture);
-    let litchiTrack = Math.floor(Math.random() * 10);
+    let litchiTrack = Math.floor(Math.random() * trackNum);
     app.stage.addChild(litchi);
     litchi.x = trackArr[litchiTrack];
     litchi.y = 0;
     litchi.vx = Math.random() * 2 - 1; //x轴分速度
     litchi.vy = Math.random() + 1; //y轴分速度
-    litchi.width = 50;
-    litchi.height = 50;
+    litchi.width = litchiParams.width;
+    litchi.height = litchiParams.height;
     litchiArr.push(litchi);
   }
 
@@ -226,7 +247,7 @@ function gameLoop() {
     //旋转子弹
     bulletArr[i].rotation = (delay % 10) / 10;
     //没有发生碰撞也没有超出屏幕
-    bulletArr[i].y -= bulletSpeed;
+    bulletArr[i].y -= bulletParams.speed;
 
     let _enemyArr: any[] = JSON.parse(JSON.stringify(enemyArr));
 
@@ -238,20 +259,28 @@ function gameLoop() {
       for (let j = 0; j < curEnemyArr.length; j++) {
         //判断是否碰撞
         if (hitTestRectangle(bulletArr[i], curEnemyArr[j])) {
-          //如果发生碰撞
-          let _bullet = bulletArr.splice(i, 1)[0];
-          let _enemy = curEnemyArr.splice(j, 1)[0];
+          curEnemyArr[j].hp -= 1;
+          if (curEnemyArr[j].hp <= 0) {
+            //如果发生碰撞
+            let _bullet = bulletArr.splice(i, 1)[0];
+            let _enemy = curEnemyArr.splice(j, 1)[0];
 
-          //播放音频
-          let audio = new Audio();
-          audio.src = resources[enemy.voice].url;
-          audio.play();
+            //播放音频
+            let audio = new Audio();
+            audio.src = resources[enemy.voice].url;
+            audio.play();
 
-          _bullet.visible = false;
-          _enemy.visible = false;
+            _bullet.visible = false;
+            _enemy.visible = false;
 
-          enemy.isHit = true;
-          break;
+            enemy.isHit = true;
+            break;
+          } else {
+            let _bullet = bulletArr.splice(i, 1)[0];
+            _bullet.visible = false;
+            enemy.isHit = true;
+            break;
+          }
         }
       }
 

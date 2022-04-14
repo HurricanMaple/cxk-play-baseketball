@@ -20,7 +20,7 @@
       <p>操作方向键(⬅⬆➡⬇)或移动鼠标(🖱)控制坤坤移动</p>
       <p>作者：<s>小黑子</s> ikun</p>
       <p>
-        github地址:<a
+        github:<a
           href="https://github.com/1051029357/plane-game"
           target="_blank"
           >1051029537的github</a
@@ -120,6 +120,9 @@ onMounted(() => {
   transition: all 0.4s;
   cursor: pointer;
   max-width: 200px;
+  a {
+    color: rgb(230, 140, 80);
+  }
 
   .goods-list {
     margin-top: 20px;
