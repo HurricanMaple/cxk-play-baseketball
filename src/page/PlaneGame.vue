@@ -195,10 +195,6 @@ function gameLoop() {
     bullet.height = bulletParams.height;
     bullet.anchor.set(0.5);
     bulletArr.push(bullet);
-
-    let audio = new Audio();
-    audio.src = resources.biu.url;
-    audio.play();
   }
 
   //创建中分头发
@@ -260,6 +256,11 @@ function gameLoop() {
         //判断是否碰撞
         if (hitTestRectangle(bulletArr[i], curEnemyArr[j])) {
           curEnemyArr[j].hp -= 1;
+
+          let audio = new Audio();
+          audio.src = resources.biu.url;
+          audio.play();
+
           if (curEnemyArr[j].hp <= 0) {
             //如果发生碰撞
             let _bullet = bulletArr.splice(i, 1)[0];
