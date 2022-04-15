@@ -19,7 +19,7 @@
 ## 开发
 ### 克隆代码
 ```
-git clone https://github.com/lin-xin/vue-manage-system.git
+git clone https://github.com/czj0923/cxk-play-baseketball.git
 ```
 ### 进入项目目录
 ```

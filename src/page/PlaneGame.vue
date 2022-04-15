@@ -3,6 +3,7 @@
   <div class="info-box">
     <ul>
       <li>得分:{{ state.score }}</li>
+      <li>FPS:{{ state.fps }}</li>
       <li>
         HP:{{ state.hp }}
         <div class="hp-box">
@@ -16,6 +17,7 @@
     </ul>
   </div>
   <div class="start-box" v-if="!state.status">
+    <div class="title">坤坤打篮球</div>
     <div class="box-content">
       <div class="content">{{ state.content }}</div>
       <div class="score">得分：{{ state.score }}</div>
@@ -53,12 +55,21 @@ let panelWidth = document.body.clientWidth, //游戏面板宽度
     hp: 2,
     width: 50,
     height: 35,
+    score: 2,
   },
   chickenParams = {
-    createSpeed: 1, //创建鸡的速度
+    createSpeed: 3, //创建鸡的速度
     hp: 5,
+    width: 100,
+    height: 100,
+    score: 5,
+  },
+  lshParams = {
+    createSpeed: 1, //创建绿尸寒的速度
     width: 50,
     height: 50,
+    hp: 2,
+    score: 2,
   },
   litchiParams = {
     createSpeed: 5, //创建荔枝的速度
@@ -78,6 +89,11 @@ let enemyArr = [
     isHit: false,
     voice: "crow",
   },
+  {
+    type: "lsh",
+    isHit: false,
+    voice: "boom",
+  },
 ];
 
 //存放奖励
@@ -93,6 +109,7 @@ const state = reactive({
   content: "", //内容
   score: 0, //得分
   hp: 100, //血量
+  fps: 0,
 });
 
 //血量的动态类名
@@ -128,11 +145,12 @@ for (let key in Resources) {
 
 loader.load(setup);
 
-let plane: any,
+let cxk: any,
   bulletArr: any[] = [],
   chickenArr: any[] = [],
   hairArr: any[] = [],
-  litchiArr: any[] = [];
+  litchiArr: any[] = [],
+  lshArr: any[] = [];
 
 function setup() {
   // 创建背景
@@ -143,45 +161,54 @@ function setup() {
   bg.y = 0;
   app.stage.addChild(bg);
 
-  plane = new Sprite(resources.cxk.texture);
-  plane.x = panelWidth / 2 - roleWidth / 2;
-  plane.y = panelHeight - 20 - roleHeight;
-  plane.width = roleWidth;
-  plane.height = roleHeight;
-  plane.vx = 0;
-  plane.vy = 0;
+  cxk = new Sprite(resources.cxk.texture);
+  cxk.x = panelWidth / 2 - roleWidth / 2;
+  cxk.y = panelHeight - 20 - roleHeight;
+  cxk.width = roleWidth;
+  cxk.height = roleHeight;
+  cxk.vx = 0;
+  cxk.vy = 0;
 
-  plane.interactive = true;
+  cxk.interactive = true;
 
-  app.stage.addChild(plane);
+  app.stage.addChild(cxk);
 
   //键盘控制飞机移动
-  planeMove(plane);
+  planeMove(cxk);
 
   app.ticker.add(() => gameLoop());
   //先暂停
   app.ticker.stop();
 }
 
+//用于标记当前第几帧
 let delay = 0;
-
+let g_Time = 0;
 function gameLoop() {
+  //计算帧率
+  if (!(delay % 30)) {
+    var timeNow = new Date().getTime();
+    var timeDiff = timeNow - g_Time;
+    g_Time = timeNow;
+    state.fps = Number(((30 * 1000) / timeDiff).toFixed(0));
+  }
+
   delay += 1;
-  plane.x += plane.vx;
-  plane.y += plane.vy;
+  cxk.x += cxk.vx;
+  cxk.y += cxk.vy;
 
   //防止飞机超出边界
-  if (plane.x < 0) {
-    plane.x = 0;
+  if (cxk.x < 0) {
+    cxk.x = 0;
   }
-  if (plane.y < 0) {
-    plane.y = 0;
+  if (cxk.y < 0) {
+    cxk.y = 0;
   }
-  if (plane.x > panelWidth - roleWidth) {
-    plane.x = panelWidth - roleWidth;
+  if (cxk.x > panelWidth - roleWidth) {
+    cxk.x = panelWidth - roleWidth;
   }
-  if (plane.y > panelHeight - roleHeight) {
-    plane.y = panelHeight - roleHeight;
+  if (cxk.y > panelHeight - roleHeight) {
+    cxk.y = panelHeight - roleHeight;
   }
 
   //创建子弹
@@ -189,8 +216,8 @@ function gameLoop() {
     //创建子弹
     let bullet = new Sprite(resources.basketball.texture);
     app.stage.addChild(bullet);
-    bullet.x = plane.x + roleWidth / 2;
-    bullet.y = plane.y - 20;
+    bullet.x = cxk.x + roleWidth / 2;
+    bullet.y = cxk.y - 20;
     bullet.width = bulletParams.width;
     bullet.height = bulletParams.height;
     bullet.anchor.set(0.5);
@@ -236,6 +263,20 @@ function gameLoop() {
     litchi.width = litchiParams.width;
     litchi.height = litchiParams.height;
     litchiArr.push(litchi);
+  }
+
+  //创建绿尸寒
+  if (delay % Math.round(lshParams.createSpeed * 60) === 0) {
+    let lsh = new Sprite(resources.lsh.texture);
+    let lshTrack = Math.floor(Math.random() * trackNum);
+    app.stage.addChild(lsh);
+    lsh.x = trackArr[lshTrack];
+    lsh.y = 0;
+    lsh.hp = lshParams.hp; //血量
+
+    lsh.width = lshParams.width;
+    lsh.height = lshParams.height;
+    lshArr.push(lsh);
   }
 
   //子弹
@@ -312,7 +353,7 @@ function gameLoop() {
     //当前的奖励数组
     let curRewardArr = eval(reward.type + "Arr");
     for (let i = 0; i < curRewardArr.length; i++) {
-      if (hitTestRectangle(plane, curRewardArr[i])) {
+      if (hitTestRectangle(cxk, curRewardArr[i])) {
         //得到奖励
         let _reward = curRewardArr.splice(i, 1)[0];
 
@@ -338,7 +379,7 @@ function gameLoop() {
     let curEnemyArr = eval(enemy.type + "Arr");
     for (let j = 0; j < curEnemyArr.length; j++) {
       //判断是否碰撞
-      if (hitTestRectangle(plane, curEnemyArr[j])) {
+      if (hitTestRectangle(cxk, curEnemyArr[j])) {
         //如果发生碰撞
         let _enemy = curEnemyArr.splice(j, 1)[0];
 
@@ -478,6 +519,14 @@ onMounted(() => {
   height: 100vh;
   top: 0;
   left: 0;
+  .title {
+    top: 20%;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 48px;
+    color: #f64b4b;
+  }
   .box-content {
     border-radius: 10px;
     position: absolute;
@@ -485,13 +534,19 @@ onMounted(() => {
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: #fff;
-    padding: 20px 40px;
+    width: 250px;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     .start-btn {
       background-color: rgb(223, 219, 120);
       color: #fff;
       border-radius: 5px;
-      padding: 5px 8px;
+      padding: 10px 16px;
       cursor: pointer;
+      font-size: 18px;
+      margin-top: 20px;
     }
   }
 }
