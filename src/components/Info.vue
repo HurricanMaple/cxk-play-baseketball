@@ -29,19 +29,21 @@
     <ul class="goods-list">
       <li class="item">
         <img src="@/assets/img/litchi.png" />
-        <div class="text">荔枝：HP+20</div>
+        <div class="text">
+          <span class="name">荔枝</span>:HP+20,射速x2持续1秒
+        </div>
       </li>
       <li class="item">
         <img src="@/assets/img/hair.png" />
-        <div class="text">中分：buff加成</div>
+        <div class="text"><span class="name">中分</span>:buff加成</div>
       </li>
       <li class="item">
         <img src="@/assets/img/chicken.png" />
-        <div class="text">已练习两年半</div>
+        <div class="text"><span class="name">鸡</span>:已练习两年半</div>
       </li>
       <li class="item">
         <img src="@/assets/img/lsh.png" />
-        <div class="text">绿尸寒:暂定</div>
+        <div class="text"><span class="name">绿尸寒</span>:触发被动跳</div>
       </li>
       <li class="item">
         <img src="@/assets/img/branch.png" />
@@ -124,6 +126,10 @@ onMounted(() => {
 
   .goods-list {
     margin-top: 20px;
+    font-size: 14px;
+    .name {
+      color: rgb(248, 54, 115);
+    }
     .item {
       display: flex;
       align-items: center;
@@ -135,6 +141,7 @@ onMounted(() => {
         object-fit: contain;
       }
       .text {
+        text-align: left;
       }
       &:not(:last-child) {
         margin-bottom: 5px;

@@ -21,7 +21,7 @@
     <div class="box-content">
       <div class="content">{{ state.content }}</div>
       <div class="score">得分：{{ state.score }}</div>
-      <div class="start-btn" @click="startGame">开始游戏</div>
+      <div class="btn" @click="startGame">开始游戏</div>
     </div>
   </div>
 </template>
@@ -72,7 +72,7 @@ let panelWidth = document.body.clientWidth, //游戏面板宽度
     score: 2,
   },
   litchiParams = {
-    createSpeed: 5, //创建荔枝的速度
+    createSpeed: 6, //创建荔枝的速度
     width: 50,
     height: 50,
   };
@@ -95,6 +95,30 @@ let enemyArr = [
     voice: "boom",
   },
 ];
+
+//被动：唱 增加射速持续两秒
+function sing() {
+  bulletParams.createSpeed = 0.1;
+  setTimeout(() => {
+    bulletParams.createSpeed = 0.2;
+  }, 1000);
+}
+
+//被动：跳 kun镜像翻转持续1s
+function jump() {
+  cxk.anchor.x = 1;
+  cxk.scale.x *= -1;
+}
+
+//角色变大
+function big() {
+  cxk.width = roleWidth * 1.2;
+  cxk.height = roleHeight * 1.2;
+  setTimeout(() => {
+    cxk.width = roleWidth;
+    cxk.height = roleHeight;
+  }, 1000);
+}
 
 //存放奖励
 let rewardArr = [
@@ -362,6 +386,8 @@ function gameLoop() {
         audio.src = resources[reward.voice].url;
         audio.play();
 
+        sing();
+
         state.hp += 20;
 
         _reward.visible = false;
@@ -388,6 +414,7 @@ function gameLoop() {
         audio.src = resources.ngm.url;
         audio.play();
 
+        big();
         //扣血
         state.hp -= 10;
 
@@ -539,13 +566,7 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    .start-btn {
-      background-color: rgb(223, 219, 120);
-      color: #fff;
-      border-radius: 5px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-size: 18px;
+    .btn {
       margin-top: 20px;
     }
   }
