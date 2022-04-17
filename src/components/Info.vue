@@ -30,7 +30,7 @@
       <li class="item">
         <img src="@/assets/img/litchi.png" />
         <div class="text">
-          <span class="name">荔枝</span>:HP+20,射速x2持续1秒
+          <span class="name">荔枝</span>:HP+20,射速x2持续2秒
         </div>
       </li>
       <li class="item">

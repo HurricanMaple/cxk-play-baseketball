@@ -35,9 +35,10 @@ import { hitTestRectangle } from "@/assets/js/bump";
 //import Dust from "@/assets/js/lib/dust.js";
 
 let Application = PIXI.Application,
-  loader = PIXI.loader,
+  //loader = PIXI.loader,
   Sprite = PIXI.Sprite,
-  resources = PIXI.loader.resources;
+  //resources = PIXI.loader.resources,
+  Texture = PIXI.Texture;
 
 let panelWidth = document.body.clientWidth, //游戏面板宽度
   panelHeight = document.body.clientHeight, //游戏面板高度
@@ -101,7 +102,7 @@ function sing() {
   bulletParams.createSpeed = 0.1;
   setTimeout(() => {
     bulletParams.createSpeed = 0.2;
-  }, 1000);
+  }, 2000);
 }
 
 //被动：跳 kun镜像翻转持续1s
@@ -164,10 +165,10 @@ let app = new Application({
 });
 
 for (let key in Resources) {
-  loader.add(key, Resources[key]);
+  app.loader.add(key, Resources[key]);
 }
 
-loader.load(setup);
+app.loader.load(setup);
 
 let cxk: any,
   bulletArr: any[] = [],
@@ -178,14 +179,14 @@ let cxk: any,
 
 function setup() {
   // 创建背景
-  let bg = new Sprite(resources.bg.texture);
+  let bg = new Sprite(app.loader.resources.bg.texture);
   bg.width = panelWidth;
   bg.height = panelHeight;
   bg.x = 0;
   bg.y = 0;
   app.stage.addChild(bg);
 
-  cxk = new Sprite(resources.cxk.texture);
+  cxk = new Sprite(app.loader.resources.cxk.texture);
   cxk.x = panelWidth / 2 - roleWidth / 2;
   cxk.y = panelHeight - 20 - roleHeight;
   cxk.width = roleWidth;
@@ -238,7 +239,7 @@ function gameLoop() {
   //创建子弹
   if (delay % Math.round(bulletParams.createSpeed * 60) === 0) {
     //创建子弹
-    let bullet = new Sprite(resources.basketball.texture);
+    let bullet: any = new Sprite(app.loader.resources.basketball.texture);
     app.stage.addChild(bullet);
     bullet.x = cxk.x + roleWidth / 2;
     bullet.y = cxk.y - 20;
@@ -250,7 +251,7 @@ function gameLoop() {
 
   //创建中分头发
   if (delay % Math.round(hairParams.createSpeed * 60) === 0) {
-    let hair = new Sprite(resources.hair.texture);
+    let hair: any = new Sprite(app.loader.resources.hair.texture);
     let hairTrack = Math.floor(Math.random() * trackNum);
     app.stage.addChild(hair);
     hair.x = trackArr[hairTrack];
@@ -263,7 +264,7 @@ function gameLoop() {
 
   //创建鸡
   if (delay % Math.round(chickenParams.createSpeed * 60) === 0) {
-    let chicken = new Sprite(resources.chicken.texture);
+    let chicken: any = new Sprite(app.loader.resources.chicken.texture);
     let chickenTrack = Math.floor(Math.random() * trackNum);
     app.stage.addChild(chicken);
     chicken.x = trackArr[chickenTrack];
@@ -277,7 +278,7 @@ function gameLoop() {
 
   //创建荔枝
   if (delay % Math.round(litchiParams.createSpeed * 60) === 0) {
-    let litchi = new Sprite(resources.litchi.texture);
+    let litchi: any = new Sprite(app.loader.resources.litchi.texture);
     let litchiTrack = Math.floor(Math.random() * trackNum);
     app.stage.addChild(litchi);
     litchi.x = trackArr[litchiTrack];
@@ -291,7 +292,7 @@ function gameLoop() {
 
   //创建绿尸寒
   if (delay % Math.round(lshParams.createSpeed * 60) === 0) {
-    let lsh = new Sprite(resources.lsh.texture);
+    let lsh: any = new Sprite(app.loader.resources.lsh.texture);
     let lshTrack = Math.floor(Math.random() * trackNum);
     app.stage.addChild(lsh);
     lsh.x = trackArr[lshTrack];
@@ -323,7 +324,7 @@ function gameLoop() {
           curEnemyArr[j].hp -= 1;
 
           let audio = new Audio();
-          audio.src = resources.biu.url;
+          audio.src = app.loader.resources.biu.url;
           audio.play();
 
           if (curEnemyArr[j].hp <= 0) {
@@ -333,7 +334,7 @@ function gameLoop() {
 
             //播放音频
             let audio = new Audio();
-            audio.src = resources[enemy.voice].url;
+            audio.src = app.loader.resources[enemy.voice].url;
             audio.play();
 
             _bullet.visible = false;
@@ -383,7 +384,7 @@ function gameLoop() {
 
         //播放获得奖励的音频
         let audio = new Audio();
-        audio.src = resources[reward.voice].url;
+        audio.src = app.loader.resources[reward.voice].url;
         audio.play();
 
         sing();
@@ -411,7 +412,7 @@ function gameLoop() {
 
         //播放音频
         let audio = new Audio();
-        audio.src = resources.ngm.url;
+        audio.src = app.loader.resources.ngm.url;
         audio.play();
 
         big();
