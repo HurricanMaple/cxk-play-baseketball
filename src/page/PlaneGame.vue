@@ -32,7 +32,18 @@ import * as PIXI from "pixi.js";
 import { Resources } from "@/assets/js/resources";
 import planeMove from "@/assets/js/move";
 import { hitTestRectangle } from "@/assets/js/bump";
-//import Dust from "@/assets/js/lib/dust.js";
+import { initEnemy, initReward, initBullet } from "@/assets/js/initSprite";
+import {
+  roleWidth,
+  roleHeight,
+  bulletParams,
+  hairParams,
+  chickenParams,
+  lshParams,
+  litchiParams,
+  enemyArr,
+  rewardArr,
+} from "@/assets/js/parameter";
 
 let Application = PIXI.Application,
   //loader = PIXI.loader,
@@ -41,61 +52,7 @@ let Application = PIXI.Application,
   Texture = PIXI.Texture;
 
 let panelWidth = document.body.clientWidth, //游戏面板宽度
-  panelHeight = document.body.clientHeight, //游戏面板高度
-  trackNum = 20, //轨道条数
-  roleWidth = 100, //角色宽度
-  roleHeight = 150, //角色高度
-  bulletParams = {
-    createSpeed: 0.2, //创建子弹的速度 n秒
-    speed: 10, //子弹速度
-    width: 12,
-    height: 12,
-  },
-  hairParams = {
-    createSpeed: 0.7, //创建头发的速度
-    hp: 2,
-    width: 50,
-    height: 35,
-    score: 2,
-  },
-  chickenParams = {
-    createSpeed: 3, //创建鸡的速度
-    hp: 5,
-    width: 100,
-    height: 100,
-    score: 5,
-  },
-  lshParams = {
-    createSpeed: 1, //创建绿尸寒的速度
-    width: 50,
-    height: 50,
-    hp: 2,
-    score: 2,
-  },
-  litchiParams = {
-    createSpeed: 6, //创建荔枝的速度
-    width: 50,
-    height: 50,
-  };
-
-//存放需要遍历的敌人
-let enemyArr = [
-  {
-    type: "hair", //敌人类型
-    isHit: false, //是否碰撞
-    voice: "boom", //爆炸音效
-  },
-  {
-    type: "chicken",
-    isHit: false,
-    voice: "crow",
-  },
-  {
-    type: "lsh",
-    isHit: false,
-    voice: "boom",
-  },
-];
+  panelHeight = document.body.clientHeight; //游戏面板高度
 
 //被动：唱 增加射速持续两秒
 function sing() {
@@ -107,28 +64,20 @@ function sing() {
 
 //被动：跳 kun镜像翻转持续1s
 function jump() {
-  cxk.anchor.x = 1;
-  cxk.scale.x *= -1;
+  role.anchor.x = 1;
+  role.scale.x *= -1;
 }
 
 //角色变大
 function big() {
-  cxk.width = roleWidth * 1.2;
-  cxk.height = roleHeight * 1.2;
+  role.width = roleWidth * 1.2;
+  role.height = roleHeight * 1.2;
   setTimeout(() => {
-    cxk.width = roleWidth;
-    cxk.height = roleHeight;
+    role.width = roleWidth;
+    role.height = roleHeight;
   }, 1000);
 }
 
-//存放奖励
-let rewardArr = [
-  {
-    type: "litchi",
-    isHit: false,
-    voice: "reward",
-  },
-];
 const state = reactive({
   status: false, //游戏是否开始
   content: "", //内容
@@ -146,22 +95,12 @@ const hpClass = computed(() => {
   };
 });
 
-//把屏幕宽度分为10份  每份宽度
-let trackWidth = Math.floor(panelWidth / trackNum);
-let trackArr = new Array(trackNum);
-
-//初始化轨道数组
-for (let i = 0; i < trackNum; i++) {
-  trackArr[i] = trackWidth * (i + 1) + 25;
-}
-
 let app = new Application({
   width: panelWidth, // default: 800 宽度
   height: panelHeight, // default: 600 高度
   antialias: true, // default: false 反锯齿
-  transparent: false, // default: false 透明度
   resolution: 1, // default: 1 分辨率
-  backgroundAlpha: 0, // 设置背景颜色透明度   0是透明
+  backgroundColor: 0xfff,
 });
 
 for (let key in Resources) {
@@ -170,7 +109,7 @@ for (let key in Resources) {
 
 app.loader.load(setup);
 
-let cxk: any,
+let role: any,
   bulletArr: any[] = [],
   chickenArr: any[] = [],
   hairArr: any[] = [],
@@ -186,24 +125,24 @@ function setup() {
   bg.y = 0;
   app.stage.addChild(bg);
 
-  cxk = new Sprite(app.loader.resources.cxk.texture);
-  cxk.x = panelWidth / 2 - roleWidth / 2;
-  cxk.y = panelHeight - 20 - roleHeight;
-  cxk.width = roleWidth;
-  cxk.height = roleHeight;
-  cxk.vx = 0;
-  cxk.vy = 0;
+  role = new Sprite(app.loader.resources.cxk.texture);
+  role.x = panelWidth / 2 - roleWidth / 2;
+  role.y = panelHeight - 20 - roleHeight;
+  role.width = roleWidth;
+  role.height = roleHeight;
+  role.vx = 0;
+  role.vy = 0;
 
-  cxk.interactive = true;
+  role.interactive = true;
 
-  app.stage.addChild(cxk);
+  app.stage.addChild(role);
 
   //键盘控制飞机移动
-  planeMove(cxk);
+  planeMove(role);
 
   app.ticker.add(() => gameLoop());
   //先暂停
-  app.ticker.stop();
+  app.stop();
 }
 
 //用于标记当前第几帧
@@ -219,89 +158,52 @@ function gameLoop() {
   }
 
   delay += 1;
-  cxk.x += cxk.vx;
-  cxk.y += cxk.vy;
+  role.x += role.vx;
+  role.y += role.vy;
 
   //防止飞机超出边界
-  if (cxk.x < 0) {
-    cxk.x = 0;
+  if (role.x < 0) {
+    role.x = 0;
   }
-  if (cxk.y < 0) {
-    cxk.y = 0;
+  if (role.y < 0) {
+    role.y = 0;
   }
-  if (cxk.x > panelWidth - roleWidth) {
-    cxk.x = panelWidth - roleWidth;
+  if (role.x > panelWidth - roleWidth) {
+    role.x = panelWidth - roleWidth;
   }
-  if (cxk.y > panelHeight - roleHeight) {
-    cxk.y = panelHeight - roleHeight;
+  if (role.y > panelHeight - roleHeight) {
+    role.y = panelHeight - roleHeight;
   }
 
   //创建子弹
   if (delay % Math.round(bulletParams.createSpeed * 60) === 0) {
     //创建子弹
-    let bullet: any = new Sprite(app.loader.resources.basketball.texture);
-    app.stage.addChild(bullet);
-    bullet.x = cxk.x + roleWidth / 2;
-    bullet.y = cxk.y - 20;
-    bullet.width = bulletParams.width;
-    bullet.height = bulletParams.height;
-    bullet.anchor.set(0.5);
+    let bullet = initBullet(app, bulletParams, role);
     bulletArr.push(bullet);
   }
 
   //创建中分头发
   if (delay % Math.round(hairParams.createSpeed * 60) === 0) {
-    let hair: any = new Sprite(app.loader.resources.hair.texture);
-    let hairTrack = Math.floor(Math.random() * trackNum);
-    app.stage.addChild(hair);
-    hair.x = trackArr[hairTrack];
-    hair.y = 0;
-    hair.width = hairParams.width;
-    hair.height = hairParams.height;
-    hair.hp = hairParams.hp; //血量
+    let hair = initEnemy(app, hairParams);
     hairArr.push(hair);
   }
 
   //创建鸡
   if (delay % Math.round(chickenParams.createSpeed * 60) === 0) {
-    let chicken: any = new Sprite(app.loader.resources.chicken.texture);
-    let chickenTrack = Math.floor(Math.random() * trackNum);
-    app.stage.addChild(chicken);
-    chicken.x = trackArr[chickenTrack];
-    chicken.y = 0;
-    chicken.hp = chickenParams.hp; //血量
-    chicken.width = chickenParams.width;
-    chicken.height = chickenParams.height;
-
+    let chicken = initEnemy(app, chickenParams);
     chickenArr.push(chicken);
-  }
-
-  //创建荔枝
-  if (delay % Math.round(litchiParams.createSpeed * 60) === 0) {
-    let litchi: any = new Sprite(app.loader.resources.litchi.texture);
-    let litchiTrack = Math.floor(Math.random() * trackNum);
-    app.stage.addChild(litchi);
-    litchi.x = trackArr[litchiTrack];
-    litchi.y = 0;
-    litchi.vx = Math.random() * 2 - 1; //x轴分速度
-    litchi.vy = Math.random() + 1; //y轴分速度
-    litchi.width = litchiParams.width;
-    litchi.height = litchiParams.height;
-    litchiArr.push(litchi);
   }
 
   //创建绿尸寒
   if (delay % Math.round(lshParams.createSpeed * 60) === 0) {
-    let lsh: any = new Sprite(app.loader.resources.lsh.texture);
-    let lshTrack = Math.floor(Math.random() * trackNum);
-    app.stage.addChild(lsh);
-    lsh.x = trackArr[lshTrack];
-    lsh.y = 0;
-    lsh.hp = lshParams.hp; //血量
-
-    lsh.width = lshParams.width;
-    lsh.height = lshParams.height;
+    let lsh = initEnemy(app, lshParams);
     lshArr.push(lsh);
+  }
+
+  //创建荔枝
+  if (delay % Math.round(litchiParams.createSpeed * 60) === 0) {
+    let litchi = initReward(app, litchiParams);
+    litchiArr.push(litchi);
   }
 
   //子弹
@@ -378,7 +280,7 @@ function gameLoop() {
     //当前的奖励数组
     let curRewardArr = eval(reward.type + "Arr");
     for (let i = 0; i < curRewardArr.length; i++) {
-      if (hitTestRectangle(cxk, curRewardArr[i])) {
+      if (hitTestRectangle(role, curRewardArr[i])) {
         //得到奖励
         let _reward = curRewardArr.splice(i, 1)[0];
 
@@ -406,7 +308,7 @@ function gameLoop() {
     let curEnemyArr = eval(enemy.type + "Arr");
     for (let j = 0; j < curEnemyArr.length; j++) {
       //判断是否碰撞
-      if (hitTestRectangle(cxk, curEnemyArr[j])) {
+      if (hitTestRectangle(role, curEnemyArr[j])) {
         //如果发生碰撞
         let _enemy = curEnemyArr.splice(j, 1)[0];
 
@@ -463,7 +365,7 @@ function gameLoop() {
 const startGame = () => {
   state.status = true;
   state.score = 0;
-  app.ticker.start();
+  app.start();
 };
 //监听血量，若小于等于0则游戏结束
 watch(
@@ -472,11 +374,11 @@ watch(
     if (newHp <= 0) {
       state.status = false;
       //重新开始
-      app.ticker.stop();
-      bulletArr = [];
-      chickenArr = [];
-      hairArr = [];
-      litchiArr = [];
+      app.stop();
+      //bulletArr = [];
+      //chickenArr = [];
+      //hairArr = [];
+      //litchiArr = [];
 
       state.hp = 100;
       state.content = "您失败了！";
