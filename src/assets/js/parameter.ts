@@ -1,7 +1,27 @@
 /*存储参数 */
+interface enemyObj {
+  [propName: string]: {
+    name: string;
+    hp: number;
+    width: number;
+    height: number;
+    score: number;
+    voice: string;
+  };
+}
+interface rewardObj {
+  [propName: string]: {
+    name: string;
+    width: number;
+    height: number;
+    voice: string;
+  };
+}
 
-const panelWidth = document.body.clientWidth; //游戏面板宽度
-const panelHeight = document.body.clientHeight; //游戏面板高度
+//const panelWidth = document.body.clientWidth; //游戏面板宽度
+//const panelHeight = document.body.clientHeight; //游戏面板高度
+const panelWidth = 700;
+const panelHeight = 700;
 const trackNum = 20; //轨道条数
 
 const trackArr = new Array(trackNum); //存放轨道位置
@@ -21,66 +41,66 @@ const bulletParams = {
   width: 12,
   height: 12,
 };
-//中分的参数
-const hairParams = {
-  name: "hair", //名称
-  createSpeed: 0.7, //创建速度
-  hp: 2, //血量
-  width: 50, //宽度
-  height: 35, //高度
-  score: 2, //击败后得分
-};
-//鸡的参数
-const chickenParams = {
-  name: "chicken",
-  createSpeed: 3,
-  hp: 5,
-  width: 100,
-  height: 100,
-  score: 5,
-};
-//绿尸寒的参数
-const lshParams = {
-  name: "lsh",
-  createSpeed: 1,
-  width: 50,
-  height: 50,
-  hp: 2,
-  score: 2,
-};
-//荔枝的参数
-const litchiParams = {
-  name: "litchi",
-  createSpeed: 6, //创建荔枝的速度
-  width: 50,
-  height: 50,
+
+//敌人的参数
+const enemyParams: enemyObj = {
+  hairParams: {
+    name: "hair", //名称
+    hp: 2, //血量
+    width: 50, //宽度
+    height: 35, //高度
+    score: 2, //击败后得分
+    voice: "boom", //爆炸音效
+  },
+  chickenParams: {
+    name: "chicken",
+    hp: 5,
+    width: 100,
+    height: 100,
+    score: 5,
+    voice: "crow",
+  },
+  lshParams: {
+    name: "lsh",
+    width: 50,
+    height: 50,
+    hp: 2,
+    score: 2,
+    voice: "boom",
+  },
 };
 
 //存放需要遍历的敌人
-const enemyArr = [
+const enemyArrLoop = [
   {
     type: "hair", //敌人类型
-    isHit: false, //是否碰撞
-    voice: "boom", //爆炸音效
+    createSpeed: 0.7, //创建速度
   },
   {
     type: "chicken",
-    isHit: false,
-    voice: "crow",
+    createSpeed: 3,
   },
   {
     type: "lsh",
-    isHit: false,
-    voice: "boom",
+    createSpeed: 1,
   },
 ];
 
-//存放奖励
-const rewardArr = [
+//奖励的参数
+const rewardParams: rewardObj = {
+  litchiParams: {
+    name: "litchi",
+    width: 50,
+    height: 50,
+    voice: "reward",
+  },
+};
+
+//存放需要遍历的奖励
+const rewardArrLoop = [
   {
     type: "litchi",
-    isHit: false,
-    voice: "reward",
+    createSpeed: 6, //创建荔枝的速度
   },
 ];
 
@@ -92,10 +112,8 @@ export {
   roleWidth,
   roleHeight,
   bulletParams,
-  hairParams,
-  chickenParams,
-  lshParams,
-  litchiParams,
-  enemyArr,
-  rewardArr,
+  rewardParams,
+  enemyParams,
+  enemyArrLoop,
+  rewardArrLoop,
 };

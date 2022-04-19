@@ -13,6 +13,9 @@ export function initEnemy(app: any, enemyParams: any) {
   enemy.hp = enemyParams.hp; //血量
   enemy.width = enemyParams.width;
   enemy.height = enemyParams.height;
+  enemy.voice = enemyParams.voice;
+  enemy.score = enemyParams.score;
+
   return enemy;
 }
 
@@ -29,6 +32,8 @@ export function initReward(app: any, rewardParams: any) {
   reward.vy = Math.random() + 1; //y轴分速度
   reward.width = rewardParams.width;
   reward.height = rewardParams.height;
+  reward.voice = rewardParams.voice;
+
   return reward;
 }
 

@@ -34,15 +34,15 @@ import planeMove from "@/assets/js/move";
 import { hitTestRectangle } from "@/assets/js/bump";
 import { initEnemy, initReward, initBullet } from "@/assets/js/initSprite";
 import {
+  panelWidth,
+  panelHeight,
   roleWidth,
   roleHeight,
   bulletParams,
-  hairParams,
-  chickenParams,
-  lshParams,
-  litchiParams,
-  enemyArr,
-  rewardArr,
+  rewardParams,
+  enemyArrLoop,
+  rewardArrLoop,
+  enemyParams,
 } from "@/assets/js/parameter";
 
 let Application = PIXI.Application,
@@ -50,9 +50,6 @@ let Application = PIXI.Application,
   Sprite = PIXI.Sprite,
   //resources = PIXI.loader.resources,
   Texture = PIXI.Texture;
-
-let panelWidth = document.body.clientWidth, //游戏面板宽度
-  panelHeight = document.body.clientHeight; //游戏面板高度
 
 //被动：唱 增加射速持续两秒
 function sing() {
@@ -111,10 +108,8 @@ app.loader.load(setup);
 
 let role: any,
   bulletArr: any[] = [],
-  chickenArr: any[] = [],
-  hairArr: any[] = [],
-  litchiArr: any[] = [],
-  lshArr: any[] = [];
+  rewardArr: any[] = [], //存放奖励
+  enemyArr: any[] = []; //存放敌人
 
 function setup() {
   // 创建背景
@@ -182,29 +177,21 @@ function gameLoop() {
     bulletArr.push(bullet);
   }
 
-  //创建中分头发
-  if (delay % Math.round(hairParams.createSpeed * 60) === 0) {
-    let hair = initEnemy(app, hairParams);
-    hairArr.push(hair);
-  }
+  //创建敌人
+  enemyArrLoop.forEach((item) => {
+    if (delay % Math.round(item.createSpeed * 60) === 0) {
+      let enemy = initEnemy(app, enemyParams[item.type + "Params"]);
+      enemyArr.push(enemy);
+    }
+  });
 
-  //创建鸡
-  if (delay % Math.round(chickenParams.createSpeed * 60) === 0) {
-    let chicken = initEnemy(app, chickenParams);
-    chickenArr.push(chicken);
-  }
-
-  //创建绿尸寒
-  if (delay % Math.round(lshParams.createSpeed * 60) === 0) {
-    let lsh = initEnemy(app, lshParams);
-    lshArr.push(lsh);
-  }
-
-  //创建荔枝
-  if (delay % Math.round(litchiParams.createSpeed * 60) === 0) {
-    let litchi = initReward(app, litchiParams);
-    litchiArr.push(litchi);
-  }
+  //创建奖励
+  rewardArrLoop.forEach((item) => {
+    if (delay % Math.round(item.createSpeed * 60) === 0) {
+      let reward = initReward(app, rewardParams[item.type + "Params"]);
+      rewardArr.push(reward);
+    }
+  });
 
   //子弹
   for (let i = 0; i < bulletArr.length; i++) {
@@ -212,153 +199,113 @@ function gameLoop() {
     bulletArr[i].rotation = (delay % 10) / 10;
     //没有发生碰撞也没有超出屏幕
     bulletArr[i].y -= bulletParams.speed;
+    //标记当前子弹是否发生碰撞
+    let flag = false;
 
-    let _enemyArr: any[] = JSON.parse(JSON.stringify(enemyArr));
+    for (let j = 0; j < enemyArr.length; j++) {
+      let curEnemy = enemyArr[j];
+      if (hitTestRectangle(bulletArr[i], curEnemy)) {
+        flag = true;
+        curEnemy.hp -= 1;
 
-    for (let m = 0; m < _enemyArr.length; m++) {
-      let enemy = _enemyArr[m];
+        let audio = new Audio();
+        audio.src = app.loader.resources.biu.url;
+        audio.play();
 
-      //当前的敌人数组
-      let curEnemyArr = eval(enemy.type + "Arr");
-      for (let j = 0; j < curEnemyArr.length; j++) {
-        //判断是否碰撞
-        if (hitTestRectangle(bulletArr[i], curEnemyArr[j])) {
-          curEnemyArr[j].hp -= 1;
-
+        if (curEnemy.hp <= 0) {
+          //播放音频
           let audio = new Audio();
-          audio.src = app.loader.resources.biu.url;
+          audio.src = app.loader.resources[curEnemy.voice].url;
           audio.play();
 
-          if (curEnemyArr[j].hp <= 0) {
-            //如果发生碰撞
-            let _bullet = bulletArr.splice(i, 1)[0];
-            let _enemy = curEnemyArr.splice(j, 1)[0];
+          state.score += curEnemy.score;
 
-            //播放音频
-            let audio = new Audio();
-            audio.src = app.loader.resources[enemy.voice].url;
-            audio.play();
+          //敌人被击败,子弹和敌人同时消失
+          let _bullet = bulletArr.splice(i, 1)[0];
+          let _enemy = enemyArr.splice(j, 1)[0];
 
-            _bullet.visible = false;
-            _enemy.visible = false;
+          _bullet.visible = false;
+          _enemy.visible = false;
 
-            enemy.isHit = true;
-            break;
-          } else {
-            let _bullet = bulletArr.splice(i, 1)[0];
-            _bullet.visible = false;
-            enemy.isHit = true;
-            break;
-          }
+          //因为敌人被销毁，所以索引要减一
+          j--;
+        } else {
+          //击中敌人但没击败，只销毁子弹
+          let _bullet = bulletArr.splice(i, 1)[0];
+          _bullet.visible = false;
         }
-      }
 
-      if (enemy.isHit) {
-        //只要子弹和一个敌人发生了碰撞，就终止循环
+        //如果发生碰撞终止循环
         break;
       }
     }
 
-    //只要一个障碍物发生了碰撞
-    if (_enemyArr.some((item) => item.isHit)) {
-      i--;
-      state.score++;
-    } else {
-      //没有发生碰撞就判断是否超出屏幕，超出就删除
-      if (bulletArr[i].y < 0) {
-        let _bullet = bulletArr.splice(i, 1)[0];
-        _bullet.visible = false;
-        i--;
-      }
+    //子弹没有碰撞并且超出屏幕
+    if (!flag && bulletArr[i].y < 0) {
+      let _bullet = bulletArr.splice(i, 1)[0];
+      _bullet.visible = false;
     }
   }
 
   //判断飞机和奖励项的碰撞
-  let rewardArray: any[] = JSON.parse(JSON.stringify(rewardArr));
-  for (let n = 0; n < rewardArray.length; n++) {
-    let reward = rewardArray[n];
-    //当前的奖励数组
-    let curRewardArr = eval(reward.type + "Arr");
-    for (let i = 0; i < curRewardArr.length; i++) {
-      if (hitTestRectangle(role, curRewardArr[i])) {
-        //得到奖励
-        let _reward = curRewardArr.splice(i, 1)[0];
+  for (let i = 0; i < rewardArr.length; i++) {
+    if (hitTestRectangle(role, rewardArr[i])) {
+      //播放获得奖励的音频
+      let audio = new Audio();
+      audio.src = app.loader.resources[rewardArr[i].voice].url;
+      audio.play();
 
-        //播放获得奖励的音频
-        let audio = new Audio();
-        audio.src = app.loader.resources[reward.voice].url;
-        audio.play();
+      //得到奖励
+      let _reward = rewardArr.splice(i, 1)[0];
 
-        sing();
+      sing();
 
-        state.hp += 20;
+      state.hp += 20;
 
-        _reward.visible = false;
-      }
+      _reward.visible = false;
     }
   }
 
-  //判断飞机和障碍物的碰撞
-  let enemyArray: any[] = JSON.parse(JSON.stringify(enemyArr));
+  //判断飞机和敌人的碰撞
+  for (let j = 0; j < enemyArr.length; j++) {
+    //判断是否碰撞
+    if (hitTestRectangle(role, enemyArr[j])) {
+      //如果发生碰撞
+      let _enemy = enemyArr.splice(j, 1)[0];
 
-  for (let m = 0; m < enemyArray.length; m++) {
-    let enemy = enemyArray[m];
+      //播放音频
+      let audio = new Audio();
+      audio.src = app.loader.resources.ngm.url;
+      audio.play();
 
-    //当前的敌人数组
-    let curEnemyArr = eval(enemy.type + "Arr");
-    for (let j = 0; j < curEnemyArr.length; j++) {
-      //判断是否碰撞
-      if (hitTestRectangle(role, curEnemyArr[j])) {
-        //如果发生碰撞
-        let _enemy = curEnemyArr.splice(j, 1)[0];
+      big();
+      //扣血
+      state.hp -= 10;
 
-        //播放音频
-        let audio = new Audio();
-        audio.src = app.loader.resources.ngm.url;
-        audio.play();
-
-        big();
-        //扣血
-        state.hp -= 10;
-
-        _enemy.visible = false;
-      }
-    }
-
-    if (enemy.isHit) {
-      //只要子弹和一个敌人发生了碰撞，就终止循环
-      break;
+      _enemy.visible = false;
     }
   }
 
   //判断敌人是否超出边界
-  enemyArr.forEach((item) => {
-    //当前的敌人数组
-    let curEnemyArr = eval(item.type + "Arr");
-    for (let i = 0; i < curEnemyArr.length; i++) {
-      let enemy = curEnemyArr[i];
-      enemy.y += 2;
-      if (enemy.y > panelHeight) {
-        let _enemy = curEnemyArr.splice(i, 1)[0];
-        _enemy.visible = false;
-      }
+  for (let i = 0; i < enemyArr.length; i++) {
+    let enemy = enemyArr[i];
+    enemy.y += 2;
+    if (enemy.y > panelHeight) {
+      let _enemy = enemyArr.splice(i, 1)[0];
+      _enemy.visible = false;
     }
-  });
+  }
 
   //判断奖励项是否超出边界
-  rewardArr.forEach((item) => {
-    //当前的奖励数组
-    let curRewardArr = eval(item.type + "Arr");
-    for (let i = 0; i < curRewardArr.length; i++) {
-      let reward = curRewardArr[i];
-      reward.x += reward.vx;
-      reward.y += reward.vy;
-      if (reward.y > panelHeight) {
-        let _reward = curRewardArr.splice(i, 1)[0];
-        _reward.visible = false;
-      }
+  for (let i = 0; i < rewardArr.length; i++) {
+    let reward = rewardArr[i];
+    reward.x += reward.vx;
+    reward.y += reward.vy;
+    if (reward.y > panelHeight) {
+      let _reward = rewardArr.splice(i, 1)[0];
+      _reward.visible = false;
     }
-  });
+  }
 }
 
 //开始游戏
@@ -375,10 +322,9 @@ watch(
       state.status = false;
       //重新开始
       app.stop();
-      //bulletArr = [];
-      //chickenArr = [];
-      //hairArr = [];
-      //litchiArr = [];
+
+      enemyArr = [];
+      rewardArr = [];
 
       state.hp = 100;
       state.content = "您失败了！";
