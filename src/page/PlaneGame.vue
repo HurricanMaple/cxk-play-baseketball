@@ -30,8 +30,10 @@
 import { onMounted, ref, reactive, watch, computed } from "vue";
 import * as PIXI from "pixi.js";
 import { Resources } from "@/assets/js/resources";
-import planeMove from "@/assets/js/move";
-import { hitTestRectangle } from "@/assets/js/bump";
+import planeMove from "@/utils/move";
+import { hitTestRectangle } from "@/utils/bump";
+import mitter from "@/utils/mitt";
+import { appFactory } from "@/assets/js/app";
 import { initEnemy, initReward, initBullet } from "@/assets/js/initSprite";
 import {
   panelWidth,
@@ -45,17 +47,23 @@ import {
   enemyParams,
 } from "@/assets/js/parameter";
 
-let Application = PIXI.Application,
-  //loader = PIXI.loader,
-  Sprite = PIXI.Sprite,
-  //resources = PIXI.loader.resources,
+let Sprite = PIXI.Sprite,
   Texture = PIXI.Texture;
+
+mitter.emit("create");
 
 //被动：唱 增加射速持续两秒
 function sing() {
-  bulletParams.createSpeed = 0.1;
+  mitter.emit("bigBullet", {
+    width: 50,
+    height: 50,
+  });
+
   setTimeout(() => {
-    bulletParams.createSpeed = 0.2;
+    mitter.emit("bigBullet", {
+      width: 10,
+      height: 10,
+    });
   }, 2000);
 }
 
@@ -92,13 +100,7 @@ const hpClass = computed(() => {
   };
 });
 
-let app = new Application({
-  width: panelWidth, // default: 800 宽度
-  height: panelHeight, // default: 600 高度
-  antialias: true, // default: false 反锯齿
-  resolution: 1, // default: 1 分辨率
-  backgroundColor: 0xfff,
-});
+let app = appFactory();
 
 for (let key in Resources) {
   app.loader.add(key, Resources[key]);
@@ -125,8 +127,6 @@ function setup() {
   role.y = panelHeight - 20 - roleHeight;
   role.width = roleWidth;
   role.height = roleHeight;
-  role.vx = 0;
-  role.vy = 0;
 
   role.interactive = true;
 
@@ -153,8 +153,6 @@ function gameLoop() {
   }
 
   delay += 1;
-  role.x += role.vx;
-  role.y += role.vy;
 
   //防止飞机超出边界
   if (role.x < 0) {
@@ -266,7 +264,7 @@ function gameLoop() {
     }
   }
 
-  //判断飞机和敌人的碰撞
+  //判断坤坤和敌人的碰撞
   for (let j = 0; j < enemyArr.length; j++) {
     //判断是否碰撞
     if (hitTestRectangle(role, enemyArr[j])) {
@@ -278,7 +276,11 @@ function gameLoop() {
       audio.src = app.loader.resources.ngm.url;
       audio.play();
 
-      big();
+      role.tint = 0xffff660;
+      setTimeout(() => {
+        role.tint = 0xffffff;
+      }, 500);
+
       //扣血
       state.hp -= 10;
 

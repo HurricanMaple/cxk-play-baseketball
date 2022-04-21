@@ -1,11 +1,9 @@
-import * as PIXI from "pixi.js";
+import { Sprite } from "pixi.js";
 import { trackArr, trackNum, roleWidth } from "./parameter";
 
 //创建敌人
 export function initEnemy(app: any, enemyParams: any) {
-  const enemy: any = new PIXI.Sprite(
-    app.loader.resources[enemyParams.name].texture
-  );
+  const enemy: any = new Sprite(app.loader.resources[enemyParams.name].texture);
   const enemyTrack = Math.floor(Math.random() * trackNum);
   app.stage.addChild(enemy);
   enemy.x = trackArr[enemyTrack];
@@ -21,7 +19,7 @@ export function initEnemy(app: any, enemyParams: any) {
 
 //创建奖励项
 export function initReward(app: any, rewardParams: any) {
-  const reward: any = new PIXI.Sprite(
+  const reward: any = new Sprite(
     app.loader.resources[rewardParams.name].texture
   );
   const rewardTrack = Math.floor(Math.random() * trackNum);
@@ -44,12 +42,13 @@ export function initBullet(
   role: { x: number; y: number }
 ) {
   //创建子弹
-  const bullet: any = new PIXI.Sprite(app.loader.resources.basketball.texture);
+  const bullet: any = new Sprite(app.loader.resources.basketball.texture);
   app.stage.addChild(bullet);
   bullet.x = role.x + roleWidth / 2;
   bullet.y = role.y - 20;
   bullet.width = bulletParams.width;
   bullet.height = bulletParams.height;
   bullet.anchor.set(0.5);
+
   return bullet;
 }

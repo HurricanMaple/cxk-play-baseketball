@@ -6,6 +6,7 @@
 <script lang="ts" setup>
 import PlaneGame from "./page/PlaneGame.vue";
 import Info from "./components/Info.vue";
+import { onMounted } from "vue";
 </script>
 
 <style lang="scss">
