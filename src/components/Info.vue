@@ -18,10 +18,10 @@
     <div class="desc">
       <h3>游戏说明</h3>
       <p>操作方向键(⬅⬆➡⬇)或移动鼠标(🖱)控制坤坤移动</p>
-      <p>作者：<s>小黑子</s> ikun</p>
+      <p>作者：<s>小黑子</s> 飓枫</p>
       <p>
-        github:<a href="https://github.com/czj0923/plane-game" target="_blank"
-          >czj的github</a
+        github:<a href="https://fiee.wtdown.top" target="_blank"
+          >飓枫博客</a
         >
       </p>
       <p>点击该面板收起</p>
